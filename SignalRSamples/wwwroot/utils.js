@@ -22,7 +22,7 @@ function addLine(listId, line, color) {
     if (color) {
         child.style.color = color;
     }
-    child.innerText = line;
+    child.innerText = new Date().toLocaleTimeString() + ': ' + line;
     document.getElementById(listId).appendChild(child);
 }
 
