@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using SignalRSamples.ConnectionHandlers;
 using SignalRSamples.Hubs;
 
 namespace SignalRSamples
@@ -23,8 +23,11 @@ namespace SignalRSamples
                 // Faster pings for testing
                 options.KeepAliveInterval = TimeSpan.FromSeconds(5);
             })
-            .AddMessagePackProtocol();
-            //.AddRedis();
+            .AddMessagePackProtocol()
+            .AddRedis(o =>
+            {
+                throw new NotImplementedException();
+            });
 
             services.AddCors(o =>
             {
@@ -48,19 +51,27 @@ namespace SignalRSamples
                 app.UseDeveloperExceptionPage();
             }
 
+            app.Use(async (context, next) =>
+            {
+                var userId = context.Request.Query["userId"];
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    var claims = new Claim[]
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, userId)
+                    };
+
+                    context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "custom"));
+                }
+
+                await next.Invoke();
+            });
+
             app.UseCors("Everything");
 
             app.UseSignalR(routes =>
             {
-                routes.MapHub<DynamicChat>("/dynamic");
                 routes.MapHub<Chat>("/default");
-                routes.MapHub<Streaming>("/streaming");
-                routes.MapHub<HubTChat>("/hubT");
-            });
-
-            app.UseConnections(routes =>
-            {
-                routes.MapConnectionHandler<MessagesConnectionHandler>("/chat");
             });
         }
     }

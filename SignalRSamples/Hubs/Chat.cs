@@ -11,7 +11,7 @@ namespace SignalRSamples.Hubs
     {
         public override async Task OnConnectedAsync()
         {
-            await Clients.All.SendAsync("Send", $"{Context.ConnectionId} joined");
+            await Clients.All.SendAsync("Send", $"{Context.ConnectionId} joined: User:{Context.UserIdentifier}");
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
@@ -32,6 +32,11 @@ namespace SignalRSamples.Hubs
         public Task SendToConnection(string connectionId, string message)
         {
             return Clients.Client(connectionId).SendAsync("Send", $"Private message from {Context.ConnectionId}: {message}");
+        }
+
+        public Task SendToUser(string userId, string message)
+        {
+            return Clients.User(userId).SendAsync("Send", $"Private message from {Context.UserIdentifier}: {message}");
         }
 
         public Task SendToGroup(string groupName, string message)
